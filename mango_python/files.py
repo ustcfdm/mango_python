@@ -1,5 +1,8 @@
 import os
 import re
+import shutil
+import warnings
+
 
 def dir_reg(folder: str, reg: str, recursive: bool =False, ftype: str ='all'):
     '''
@@ -51,3 +54,28 @@ def dir_reg(folder: str, reg: str, recursive: bool =False, ftype: str ='all'):
             break
 
     return f
+
+
+def mkdir(path: str, overwrite: bool = False):
+    """Create a directory with given options.
+
+    Parameters
+    ----------
+    path : str
+        Directory name
+    overwrite : bool, optional
+        Whether to overwrite the directory if it already exists, by default False
+    """
+    if os.path.isdir(path):
+        if overwrite == False:
+            # Do nothing
+            return
+        else:
+            # Remove the path and create a new one
+            
+            warnings.warn(f'All the contents in "{path}" will be removed!', stacklevel=2)
+            shutil.rmtree(path, ignore_errors=True)
+            os.mkdir(path)
+    else:
+        # path does not exist
+        os.mkdir(path)
