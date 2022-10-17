@@ -1,0 +1,18 @@
+# editable install using compat mode:
+#     pip install -e . --config-settings editable_mode=compat
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mango_python"
+version = "0.0.5"
+description = "Personal python package"
+dependencies = [
+    "numpy",
+    "matplotlib",
+]
+
+[tool.setuptools]
+packages = ["mango_python"]
