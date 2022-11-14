@@ -100,3 +100,40 @@ def imshow_overlay(*args):
     ax.set_yticks([])
 
     return fig, ax
+
+
+class IndexTracker:
+    def __init__(self, ax, X, **kwargs):
+        self.ax = ax
+        ax.set_title('use scroll wheel to navigate images')
+
+        self.X = X
+        self.slices, rows, cols = X.shape
+        self.ind = 0 #self.slices//2
+
+        self.im = ax.imshow(self.X[self.ind], **kwargs)
+        self.update()
+
+    def on_scroll(self, event):
+        # print("%s %s" % (event.button, event.step))
+        if event.button == 'up':
+            self.ind = (self.ind - 1) % self.slices
+        else:
+            self.ind = (self.ind + 1) % self.slices
+        self.update()
+
+    def update(self):
+        self.im.set_data(self.X[self.ind])
+        self.ax.set_ylabel('slice %s' % self.ind)
+        self.im.axes.figure.canvas.draw()
+        
+        
+def imshow_3d(img3d: np.ndarray, fig = None, ax = None, **kwargs) -> tuple:
+    
+    if (fig == None) or (ax == None):
+        fig, ax = plt.subplots()
+        
+    tracker = IndexTracker(ax, img3d, **kwargs)
+    fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
+    
+    return fig, ax, tracker
