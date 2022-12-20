@@ -7,11 +7,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mango_python"
-version = "0.0.5"
+version = "0.0.6"
 description = "Personal python package"
 dependencies = [
     "numpy",
     "matplotlib",
+    "tqdm"
 ]
 
 [tool.setuptools]

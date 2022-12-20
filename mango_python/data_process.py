@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 
 def iqr_limit(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 1.5) -> tuple[float, float]:
     """Calculate outlier limit values using IQR method.
@@ -26,6 +27,33 @@ def iqr_limit(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 
     return c1, c2
 
 
+def index_outliers(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 1.5) -> np.ndarray:
+    """Calculate outlier limit and find out index of outliers.
+
+    Parameters
+    ----------
+    a : np.ndarray
+        N-dimensional array
+    percentile : list[float], optional
+        Percentile, by default [25, 75]
+    ratio : float, optional
+        Range ratio, by default 1.5
+
+    Returns
+    -------
+    np.ndarray
+        Bool type, indicating outlier elements
+    """
+    
+    # get IQR limit
+    c1, c2 = iqr_limit(a, percentile, ratio)
+    
+    # index of outliers
+    a_outlier = (a < c1) | (a > c2)
+    
+    return a_outlier
+
+
 def get_window_level_iqr(img: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 1.5) -> tuple[float, float]:
     """Get window level for an image using IQR method.
 
@@ -50,3 +78,23 @@ def get_window_level_iqr(img: np.ndarray, percentile: list[float] = [25, 75], ra
     w2 = min(np.max(img), c2)
     
     return w1, w2
+
+
+def fix_bad_points(a: np.ndarray, median_size: int = 5, iqr_paras: list[float] = [25, 75, 1.5]) -> np.ndarray:
+    # TODO: add comment
+    # a: n-dimensional array
+    
+    # apply median filter
+    a_smooth = signal.medfilt(a, kernel_size=median_size).astype('float')
+    
+    # noise
+    a_noise = a - a_smooth
+    
+    # find out bad points
+    idx_bp = index_outliers(a_noise, [10, 90])
+    
+    # replace bad points with median value
+    a[idx_bp] = a_smooth[idx_bp]
+    
+    return a
+    

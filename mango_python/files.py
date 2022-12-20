@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import warnings
+import pickle
 
 
 def dir_reg(folder: str, reg: str, recursive: bool =False, ftype: str ='all'):
@@ -75,7 +76,42 @@ def mkdir(path: str, overwrite: bool = False):
             
             warnings.warn(f'All the contents in "{path}" will be removed!', stacklevel=2)
             shutil.rmtree(path, ignore_errors=True)
-            os.mkdir(path)
+            os.makedirs(path)
     else:
         # path does not exist
-        os.mkdir(path)
+        os.makedirs(path)
+        
+
+def load_pickle(filename: str) -> object:
+    """Load object from file using pickle
+
+    Parameters
+    ----------
+    filename : str
+        filename
+
+    Returns
+    -------
+    object
+        object
+    """
+    
+    with open(filename, 'rb') as f:
+        obj = pickle.load(f)
+        
+    return obj
+
+
+def dump_pickle(filename: str, obj):
+    """Dump object to file using pickle
+
+    Parameters
+    ----------
+    filename : str
+        filename
+    obj : Any
+        any variable
+    """
+    
+    with open(filename, 'wb') as f:
+        pickle.dump(obj, f)
