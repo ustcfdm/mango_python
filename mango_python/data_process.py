@@ -120,3 +120,48 @@ def extract_substring_between(s: str, sub_left: str, sub_right: str) -> str:
     """
     
     return re.findall(sub_left + '(.*)' + sub_right, s)[0]
+
+
+def rebin_image(img: np.ndarray, bin_size: tuple[int,int], bin_operation: str = 'sum', dtype: str = 'same') -> np.ndarray:
+    """Rebin image to make image smaller
+
+    Parameters
+    ----------
+    img : np.ndarray
+        N-dimensional image, where the last two axes are height and width
+    bin_size : tuple[int,int]
+        Number of bin pixels along row and col direction
+    bin_operation : str, optional
+        Bin type ('sum' or 'mean'), by default 'sum'
+    dype: str, optional
+        Output image type, same as img if 'same', by default 'same'
+
+    Returns
+    -------
+    np.ndarray
+        Image after rebin
+    
+    """
+    
+    *nslices, nrows, ncols = img.shape
+    
+    bin_row, bin_col = bin_size
+    
+    if (nrows % bin_row != 0) or (ncols % bin_col != 0):
+        raise ValueError(f'Image shape {nrows,ncols} cannot be divided exactly by bin size {bin_row,bin_col}!')
+    
+    img = img.reshape((*nslices, nrows//bin_row, bin_row, ncols//bin_col, bin_col))
+    
+    if dtype == 'same':
+        dtype = img.dtype
+    
+    if bin_operation == 'sum':
+        img = np.sum(img, axis=(-3,-1), dtype=dtype)
+    elif bin_operation == 'mean':
+        img = np.mean(img, axis=(-3,-1), dtype=dtype)
+    else:
+        raise ValueError(f'Unsupported bin operation "{bin_operation}"!')
+    
+    return img
+    
+    
