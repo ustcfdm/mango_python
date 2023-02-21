@@ -133,6 +133,10 @@ def imshow_3d(img3d: np.ndarray, fig = None, ax = None, **kwargs) -> tuple:
     if (fig == None) or (ax == None):
         fig, ax = plt.subplots()
         
+    # expand dims if img3d is actually 2d
+    if len(img3d.shape) == 2:
+        img3d = np.expand_dims(img3d, axis=0)
+        
     tracker = IndexTracker(ax, img3d, **kwargs)
     fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
     

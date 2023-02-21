@@ -63,7 +63,7 @@ def parse_pmatrix(pmatrix: np.ndarray, du: float = None) -> tuple:
 
 
 def fit_pmatrix(points_xyz: np.ndarray, points_uv: np.ndarray, du: float = None) -> np.ndarray:
-    """Calculate p-matrix with given points of (x,y,z) and (u,v)
+    """Calculate p-matrix with given points of (x,y,z) and (u,v) using pseudo-inverse method.
 
     Parameters
     ----------
@@ -223,7 +223,7 @@ def test():
     
     # uv = np.array([[1,2], [3,4], [5,6], [7,8]])
     
-    p = calc_pmatrix(xyz, uv, 1.01)
+    p = fit_pmatrix(xyz, uv, 1.01)
     print(p)
     
     

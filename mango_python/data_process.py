@@ -1,5 +1,7 @@
+import re
 import numpy as np
 from scipy import signal
+
 
 def iqr_limit(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 1.5) -> tuple[float, float]:
     """Calculate outlier limit values using IQR method.
@@ -98,3 +100,23 @@ def fix_bad_points(a: np.ndarray, median_size: int = 5, iqr_paras: list[float] =
     
     return a
     
+    
+def extract_substring_between(s: str, sub_left: str, sub_right: str) -> str:
+    """Extract substring between two substrings from a string.
+
+    Parameters
+    ----------
+    s : str
+        Input string
+    sub_left : str
+        Left substring
+    sub_right : str
+        Right substring
+
+    Returns
+    -------
+    str
+        Output substring
+    """
+    
+    return re.findall(sub_left + '(.*)' + sub_right, s)[0]
