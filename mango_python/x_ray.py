@@ -5,8 +5,10 @@ import random
 import tqdm
 from scipy import signal
 
+from . import files as fs
 
-def load_mu_data(material: str, cross_section: str = 'Total'):
+
+def load_mu_data(material: str, cross_section: str = 'Total') -> tuple[np.ndarray, np.ndarray] | pd.DataFrame:
     # TODO: add comment
     # get linear attenuation coefficient [cm^-1] of given material
     # cross_section: 'PhotoElectric', 'Compton', 'Rayleigh', 'Total', 'All'
@@ -31,6 +33,92 @@ def load_mu_data(material: str, cross_section: str = 'Total'):
     else:
         return df
     
+
+def list_mu_material() -> list[str]:
+    """List available materials having linear attenuation coefficient data
+
+    Returns
+    -------
+    list[str]
+        List of materials
+    """
+    
+    folder = os.path.join(os.path.dirname(__file__), 'mu_data')
+    files = fs.dir_reg(folder, '.*txt')
+    
+    return [os.path.basename(file)[0:-4] for file in files]
+
+
+def get_material_density(material: str) -> float:
+    """Get mass density (g/cm3) of given material
+
+    Parameters
+    ----------
+    material : str
+        Material name
+
+    Returns
+    -------
+    float
+        Material mass density (g/cm3)
+    """
+    material_density_dic = {
+        # compound
+        'adipose': 0.95,
+        'air': 1.205e-3,
+        'blood': 1.06,
+        'bone': 1.92,
+        'brain': 1.04,
+        'CaC2O4': 2.12,
+        'CaCl2': 2.15,
+        'CeCl3': 3.97,
+        'CdTe': 5.85,
+        'CsI': 4.51,
+        'gland': 1.02,
+        'GOS': 7.32,
+        'hydroxyapatite': 3.1,
+        'kidney': 1.05,
+        'liver': 1.06,
+        'muscle': 1.05,
+        'NaI': 3.67,
+        'PMMA': 1.18,
+        'spleen': 1.06,
+        'teflon': 2.2,
+        'tissue': 1.06,
+        'UricAcid': 1.87,
+        'water': 1,
+        # element
+        'Ag': 10.5,
+        'Al': 2.7,
+        'Au': 19.3,
+        'C': 2.26,
+        'Ca': 1.55,
+        'Ce': 6.78,
+        'Cl': 3.17,
+        'Cu': 8.96,
+        'Fe': 7.86,
+        'Gd': 7.89,
+        'H': 0.0899,
+        'I': 4.92,
+        'K': 0.86,
+        'Mg': 1.74,
+        'N': 1.251,
+        'Na': 0.97,
+        'O': 1.429,
+        'P': 1.82,
+        'Rh': 12.4,
+        'S': 2.07,
+        'Si': 2.33,
+        'Sn': 7.3,
+        'Tm': 9.33,
+        'W': 19.3,
+    }
+    
+    if material in material_density_dic:
+        return material_density_dic[material]
+    else:
+        raise ValueError(f'No density data of material "{material}"!')
+
     
 def sample_photon_energy_after_compton(incident_energy: float) -> float:
     # TODO: add comment

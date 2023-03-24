@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mango_python"
-version = "0.0.6"
+version = "0.0.7"
 description = "Personal python package"
 dependencies = [
     "numpy",
@@ -17,3 +17,6 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["mango_python"]
+
+[tool.setuptools.package-data]
+mango_python = ["mu_data/*.txt"]
