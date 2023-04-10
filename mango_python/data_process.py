@@ -1,6 +1,11 @@
+from numbers import Number
+from typing import Sequence
+
 import re
 import numpy as np
 from scipy import signal
+import torch
+import torch.nn.functional as F
 
 
 def iqr_limit(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 1.5) -> tuple[float, float]:
@@ -164,4 +169,70 @@ def rebin_image(img: np.ndarray, bin_size: tuple[int,int], bin_operation: str = 
     
     return img
     
+
+def median_filter_cuda(img: np.ndarray, size: int | Sequence[int], pad_mode: str = 'constant', value: Number = None, axis: int = 0) -> np.ndarray:
+    """Perform median filer for a 2D image using Pytorch CUDA GPU.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        2D image data
+    size : int | Sequence[int]
+        Median filter size (nrows, ncols)
+    pad_mode : str, optional
+        'constant', 'reflect', 'replicate', or 'circular', by default 'constant'
+    value : Number, optional
+        Fill value for 'constant' padding, by default 0
+    axis : int, optional
+        0 for row by row, 1 for col by col, -1 for all in one (requires large GPU memory), by default 0
+
+    Returns
+    -------
+    np.ndarray
+        2D image after median filtration
+
+    Raises
+    ------
+    ValueError
+        Parameter 'size' must be a int or a sequence of int
+    ValueError
+        Parameter 'axis' must be one of 0, 1, or -1
+    """
     
+    # Input image shape
+    nrows, ncols = img.shape
+    
+    # Get filter size
+    if isinstance(size, int):
+        pad_rows = pad_cols = size
+    elif isinstance(size, Sequence):
+        pad_rows, pad_cols, *_ = tuple(int(s) for s in size)
+    else:
+        raise ValueError(f'Invalid type of size: {type(size)}')
+    
+    # Create Pytorch tensor in GPU
+    img_tensor = torch.tensor(img, device='cuda')
+    
+    # Pad image tensor
+    pad = (pad_cols-1)//2, pad_cols//2, (pad_rows-1)//2, pad_rows//2
+    img_pad = F.pad(img_tensor, pad, pad_mode, value)
+    
+    # Peform median filter
+    if axis == 0:   # Median filter row by row
+        img_med = torch.zeros_like(img_tensor)
+        for row in range(nrows):
+            img_med[row,:] = img_pad[row:row+pad_rows,:].unfold(0, pad_rows, 1).unfold(1, pad_cols, 1).flatten(-2).median(-1)[0]
+    
+    elif axis == 1: # Median filter col by col
+        img_med = torch.zeros_like(img_tensor)
+        for col in range(ncols):
+            img_med[:,col] = img_pad[:,col:col+pad_cols].unfold(0, pad_rows, 1).unfold(1, pad_cols, 1).flatten(-2).median(-1)[0].flatten()
+            
+    elif axis == -1:    # Median filter one stop
+        img_med = img_pad.unfold(0, pad_rows, 1).unfold(1, pad_cols, 1).flatten(-2).median(-1)[0]
+        
+    else:
+        raise ValueError(f'Invalid parameter axis={axis}')
+    
+    return img_med.cpu().numpy()
+
