@@ -106,7 +106,7 @@ def fix_bad_points(a: np.ndarray, median_size: int = 5, iqr_paras: list[float] =
     return a
     
     
-def extract_substring_between(s: str, sub_left: str, sub_right: str) -> str:
+def extract_substring_between(s: str, sub_left: str, sub_right: str, match_str: str = '.*') -> str:
     """Extract substring between two substrings from a string.
 
     Parameters
@@ -124,7 +124,7 @@ def extract_substring_between(s: str, sub_left: str, sub_right: str) -> str:
         Output substring
     """
     
-    return re.findall(sub_left + '(.*)' + sub_right, s)[0]
+    return re.findall(sub_left + f'({match_str})' + sub_right, s)[0]
 
 
 def rebin_image(img: np.ndarray, bin_size: tuple[int,int], bin_operation: str = 'sum', dtype: str = 'same') -> np.ndarray:
