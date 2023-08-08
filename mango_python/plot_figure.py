@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def imshow_overlay(*args):
+def imshow_overlay(ax = None, *args):
     '''
     Show multiple images with overlay using matplotlib imshow function.
 
@@ -36,7 +36,8 @@ def imshow_overlay(*args):
     # Number of images to be showed
     N = len(args)
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
 
     #=====================================================================
     # Show the first image (the image layed at the bottom level)
@@ -99,7 +100,7 @@ def imshow_overlay(*args):
     ax.set_xticks([])
     ax.set_yticks([])
 
-    return fig, ax
+    return ax
 
 
 class IndexTracker:
