@@ -108,7 +108,8 @@ def fit_pmatrix(points_xyz: np.ndarray, points_uv: np.ndarray, du: float = None)
     U = np.reshape(points_uv, (-1, 1))
 
     # Solve p-matrix
-    pmatrix_v = np.linalg.inv(np.transpose(X) @ X) @ (np.transpose(X) @ U)
+    # pmatrix_v = np.linalg.inv(np.transpose(X) @ X) @ (np.transpose(X) @ U)
+    pmatrix_v, *_ = np.linalg.lstsq(X, U)
     
     # Add p_34 and reshape
     pmatrix = np.reshape(np.append(pmatrix_v, 1), (3, 4))

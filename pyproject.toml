@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mango_python"
-version = "0.0.8"
+version = "0.1.0"
 description = "Personal python package"
 dependencies = [
     "numpy",
@@ -16,6 +16,9 @@ dependencies = [
     "scipy",
     "pandas",
 ]
+
+[project.optional-dependencies]
+cuda = ["torch", "torch-dct"]
 
 [tool.setuptools]
 packages = ["mango_python"]

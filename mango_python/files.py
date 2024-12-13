@@ -5,7 +5,7 @@ import warnings
 import pickle
 
 
-def dir_reg(folder: str, reg: str, recursive: bool =False, ftype: str ='all'):
+def dir_reg(folder: str, reg: str, recursive: bool =False, ftype: str ='all') -> list[str]:
     '''
     List all pathnames in 'folder' that matches 'reg' in regular expression form.
 

@@ -1,14 +1,12 @@
+import time
 from numbers import Number
 from typing import Sequence
-
 import re
 import numpy as np
 from scipy import signal
-import torch
-import torch.nn.functional as F
 
 
-def iqr_limit(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 1.5) -> tuple[float, float]:
+def iqr_limit(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 1.5, axis: int | tuple[int] | None = None) -> tuple[float, float]:
     """Calculate outlier limit values using IQR method.
 
     Parameters
@@ -26,7 +24,7 @@ def iqr_limit(a: np.ndarray, percentile: list[float] = [25, 75], ratio: float = 
         Lower outlier limit, and upper outlier limit
     """
     
-    q1, q3 = np.percentile(a, percentile)
+    q1, q3 = np.percentile(a, percentile, axis)
     
     c1 = q1 - ratio * (q3 - q1)
     c2 = q3 + ratio * (q3 - q1)
@@ -171,7 +169,7 @@ def rebin_image(img: np.ndarray, bin_size: tuple[int,int], bin_operation: str = 
     
 
 def median_filter_cuda(img: np.ndarray, size: int | Sequence[int], pad_mode: str = 'constant', value: Number = None, axis: int = 0) -> np.ndarray:
-    """Perform median filer for a 2D image using Pytorch CUDA GPU.
+    """Perform median filer for a 2D image using Pytorch CUDA GPU. You need to install Pytorch CUDA version.
 
     Parameters
     ----------
@@ -198,6 +196,8 @@ def median_filter_cuda(img: np.ndarray, size: int | Sequence[int], pad_mode: str
     ValueError
         Parameter 'axis' must be one of 0, 1, or -1
     """
+    import torch
+    import torch.nn.functional as F
     
     # Input image shape
     nrows, ncols = img.shape
@@ -236,3 +236,81 @@ def median_filter_cuda(img: np.ndarray, size: int | Sequence[int], pad_mode: str
     
     return img_med.cpu().numpy()
 
+
+def inpaintn(img: np.ndarray, mask: np.ndarray, initial_inpaint: np.ndarray, niters: int = 100, s_range: list[float] = [100, 1e-6]) -> np.ndarray:
+    # TODO: add comment
+    # Inpaint image (2D or 3D) using inpaintn method
+    # The method is developed by https://www.mathworks.com/matlabcentral/fileexchange/27994-inpaint-over-missing-data-in-1-d-2-d-3-d-nd-arrays
+    # 
+    import torch
+    import torch_dct
+    
+    # Input image must be 2D or 3D
+    # Prepare lamda
+    lamda = np.zeros_like(img)
+    img_shape = list(img.shape)
+    ndims = len(img_shape)
+    
+    t1 = time.time()
+    for d in range(ndims):
+        arr_shape = np.ones(ndims, dtype='int')
+        arr_shape[d] = img_shape[d]
+        arr_d = np.arange(img_shape[d], dtype='float32').reshape(arr_shape)
+        
+        lamda += 2 - np.cos(arr_d*np.pi/img_shape[d])*2
+        
+    lamda = lamda ** 2
+    t2 = time.time()
+    # print(f'Prepare lamda: {t2-t1}s')
+    
+    # Prepare parameter s
+    s_arr = np.geomspace(s_range[0], s_range[1], niters)
+    
+    # relaxation factor
+    rf = 2
+    
+    # Move array data to GPU
+    lamda_gpu = torch.tensor(lamda, device='cuda')
+    img_guess_gpu = torch.tensor(initial_inpaint, device='cuda')
+    img_gpu = torch.tensor(img, device='cuda')
+    
+    # Prepare DCT and iDCT function
+    if ndims == 1:
+        dctn = torch_dct.dct1
+        idctn = torch_dct.idct1
+    elif ndims == 2:
+        dctn = torch_dct.dct_2d
+        idctn = torch_dct.idct_2d
+    elif ndims >= 3:
+        dctn = torch_dct.dct_3d
+        idctn = torch_dct.idct_3d
+        
+    # Get effective region from mask
+    w = 1 - mask.astype('bool')
+    w_gpu = torch.tensor(w, device='cuda')
+    
+    t3 = time.time()
+    # print(f'Prepare DCT: {t3-t2}s')
+    
+    for s in s_arr:
+        gamma = 1 / (1 + s * lamda_gpu)
+        img_guess_gpu = rf * idctn(gamma * dctn(w_gpu*(img_gpu-img_guess_gpu) + img_guess_gpu)) + (1-rf)*img_guess_gpu
+        
+    t4 = time.time()
+    # print(f'Inpaint for loop: {t4-t3}s')
+        
+    # Fill gap region
+    img_guess = img_guess_gpu.cpu().numpy()
+    t5 = time.time()
+    # print(f'Copy result to numpy: {t5-t4}s')
+    
+    # img_guess[..., w] = img[..., w]
+    img[..., mask] = img_guess[..., mask]
+    
+    t6 = time.time()
+    # print(f'Copy effective data: {t6-t5}s')
+    
+    return img
+
+    
+    
